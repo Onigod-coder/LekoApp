@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клиенты - LekoApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        .sortable:hover {
+            background-color: #f8f9fa;
+        }
+        .sortable::after {
+            content: '↕';
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+        .sortable[data-direction="asc"]::after {
+            content: '↑';
+            opacity: 1;
+        }
+        .sortable[data-direction="desc"]::after {
+            content: '↓';
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">LekoApp</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/clients.html">Клиенты</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/products.html">Товары</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/orders.html">Заказы</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <button id="loginBtn" class="btn btn-outline-light" style="display: none;">Войти</button>
+                    <button id="logoutBtn" class="btn btn-outline-light" style="display: none;">Выйти</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Клиенты</h2>
+            <button id="addClientBtn" class="btn btn-primary" onclick="requireAuth(() => showAddClientModal())" style="display: none;">Добавить клиента</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="id">ID</th>
+                        <th class="sortable" data-sort="last_name">Фамилия</th>
+                        <th class="sortable" data-sort="first_name">Имя</th>
+                        <th class="sortable" data-sort="middle_name">Отчество</th>
+                        <th class="sortable" data-sort="company_name">Компания</th>
+                        <th class="sortable" data-sort="email">Email</th>
+                        <th class="sortable" data-sort="phone">Телефон</th>
+                        <th class="sortable" data-sort="address">Адрес</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="clientsTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования клиента -->
+    <div class="modal fade" id="clientModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Клиент</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="clientForm">
+                        <input type="hidden" id="clientId">
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">Фамилия *</label>
+                            <input type="text" class="form-control" id="lastName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">Имя *</label>
+                            <input type="text" class="form-control" id="firstName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="middleName" class="form-label">Отчество</label>
+                            <input type="text" class="form-control" id="middleName">
+                        </div>
+                        <div class="mb-3">
+                            <label for="companyName" class="form-label">Компания</label>
+                            <input type="text" class="form-control" id="companyName">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" id="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Адрес</label>
+                            <input type="text" class="form-control" id="address">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveClient()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="clients.js"></script>
+</body>
+</html> 

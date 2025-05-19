@@ -1,0 +1,1 @@
+SELECT * FROM Clients FOR JSON PATH; 
