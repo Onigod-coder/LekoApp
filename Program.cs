@@ -4,8 +4,16 @@ using Dapper;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using System.Text.Json;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure HTTPS
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.HttpsPort = 443;
+});
 
 // Configure services
 builder.Services.AddSingleton<HtmlEncoder>(HtmlEncoder.Create(UnicodeRanges.All));
@@ -41,7 +49,7 @@ app.Use(async (context, next) =>
 
 // Get connection string from configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Server=db,1433;Database=LekoStyle;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=True;CharSet=utf8;";
+    ?? "Server=db,1433;Database=LekoStyle;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=True;";
 
 Console.WriteLine("Attempting to connect to database...");
 
@@ -75,6 +83,7 @@ while (!await TestConnection() && retryCount < maxRetries)
 
 if (retryCount >= maxRetries)
 {
+    Console.WriteLine("Could not connect to database after multiple retries");
     throw new Exception("Could not connect to database after multiple retries");
 }
 
@@ -110,6 +119,8 @@ app.MapGet("/api/products", async (HttpContext context) =>
 
 app.MapGet("/api/products/{id}", async (int id) =>
 {
+    Console.WriteLine($"Received GET request for product {id}");
+    
     using IDbConnection db = new SqlConnection(connectionString);
     try
     {
@@ -120,19 +131,26 @@ app.MapGet("/api/products/{id}", async (int id) =>
             WHERE p.product_id = @Id", new { Id = id });
         
         if (product == null)
+        {
+            Console.WriteLine($"Product {id} not found");
             return Results.NotFound();
+        }
             
+        Console.WriteLine($"Successfully retrieved product {id}");
         return Results.Ok(product);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error in /api/products/{id} endpoint: {ex.Message}");
+        Console.WriteLine($"Error in GET /api/products/{id} endpoint: {ex.Message}");
         return Results.Problem($"Database error: {ex.Message}");
     }
 });
 
 app.MapPost("/api/products", async (Product product) =>
 {
+    Console.WriteLine("Received POST request for new product");
+    Console.WriteLine($"Product data: Name={product.ProductName}, CategoryId={product.CategoryId}, Price={product.Price}, Quantity={product.QuantityInStock}");
+    
     using IDbConnection db = new SqlConnection(connectionString);
     try
     {
@@ -142,6 +160,7 @@ app.MapPost("/api/products", async (Product product) =>
             SELECT CAST(SCOPE_IDENTITY() as int)";
             
         var id = await db.QuerySingleAsync<int>(sql, product);
+        Console.WriteLine($"Successfully created product with ID: {id}");
         return Results.Created($"/api/products/{id}", new { id });
     }
     catch (Exception ex)
@@ -153,6 +172,9 @@ app.MapPost("/api/products", async (Product product) =>
 
 app.MapPut("/api/products/{id}", async (int id, Product product) =>
 {
+    Console.WriteLine($"Received PUT request for product {id}");
+    Console.WriteLine($"Product data: Name={product.ProductName}, CategoryId={product.CategoryId}, Price={product.Price}, Quantity={product.QuantityInStock}");
+    
     using IDbConnection db = new SqlConnection(connectionString);
     try
     {
@@ -172,6 +194,7 @@ app.MapPut("/api/products/{id}", async (int id, Product product) =>
             Id = id 
         });
         
+        Console.WriteLine($"Successfully updated product {id}");
         return Results.Ok();
     }
     catch (Exception ex)
@@ -183,10 +206,13 @@ app.MapPut("/api/products/{id}", async (int id, Product product) =>
 
 app.MapDelete("/api/products/{id}", async (int id) =>
 {
+    Console.WriteLine($"Received DELETE request for product {id}");
+    
     using IDbConnection db = new SqlConnection(connectionString);
     try
     {
         await db.ExecuteAsync("DELETE FROM Products WHERE product_id = @Id", new { Id = id });
+        Console.WriteLine($"Successfully deleted product {id}");
         return Results.Ok();
     }
     catch (Exception ex)
@@ -229,6 +255,8 @@ app.MapGet("/api/clients", async () =>
 
 app.MapGet("/api/clients/{id}", async (int id) =>
 {
+    Console.WriteLine($"Received GET request for client {id}");
+    
     using IDbConnection db = new SqlConnection(connectionString);
     try
     {
@@ -237,19 +265,26 @@ app.MapGet("/api/clients/{id}", async (int id) =>
             new { Id = id });
         
         if (client == null)
+        {
+            Console.WriteLine($"Client {id} not found");
             return Results.NotFound();
+        }
             
+        Console.WriteLine($"Successfully retrieved client {id}");
         return Results.Ok(client);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error in /api/clients/{id} endpoint: {ex.Message}");
+        Console.WriteLine($"Error in GET /api/clients/{id} endpoint: {ex.Message}");
         return Results.Problem($"Database error: {ex.Message}");
     }
 });
 
 app.MapPost("/api/clients", async (Client client) =>
 {
+    Console.WriteLine("Received POST request for new client");
+    Console.WriteLine($"Client data: LastName={client.LastName}, FirstName={client.FirstName}, MiddleName={client.MiddleName}, CompanyName={client.CompanyName}, Email={client.Email}, Phone={client.Phone}, Address={client.Address}");
+    
     using IDbConnection db = new SqlConnection(connectionString);
     try
     {
@@ -259,6 +294,7 @@ app.MapPost("/api/clients", async (Client client) =>
             SELECT CAST(SCOPE_IDENTITY() as int)";
             
         var id = await db.QuerySingleAsync<int>(sql, client);
+        Console.WriteLine($"Successfully created client with ID: {id}");
         return Results.Created($"/api/clients/{id}", new { id });
     }
     catch (Exception ex)
@@ -270,6 +306,9 @@ app.MapPost("/api/clients", async (Client client) =>
 
 app.MapPut("/api/clients/{id}", async (int id, Client client) =>
 {
+    Console.WriteLine($"Received PUT request for client {id}");
+    Console.WriteLine($"Client data: LastName={client.LastName}, FirstName={client.FirstName}, MiddleName={client.MiddleName}, CompanyName={client.CompanyName}, Email={client.Email}, Phone={client.Phone}, Address={client.Address}");
+    
     using IDbConnection db = new SqlConnection(connectionString);
     try
     {
@@ -295,6 +334,7 @@ app.MapPut("/api/clients/{id}", async (int id, Client client) =>
             Id = id 
         });
         
+        Console.WriteLine($"Successfully updated client {id}");
         return Results.Ok();
     }
     catch (Exception ex)
@@ -306,10 +346,13 @@ app.MapPut("/api/clients/{id}", async (int id, Client client) =>
 
 app.MapDelete("/api/clients/{id}", async (int id) =>
 {
+    Console.WriteLine($"Received DELETE request for client {id}");
+    
     using IDbConnection db = new SqlConnection(connectionString);
     try
     {
         await db.ExecuteAsync("DELETE FROM Clients WHERE client_id = @Id", new { Id = id });
+        Console.WriteLine($"Successfully deleted client {id}");
         return Results.Ok();
     }
     catch (Exception ex)
@@ -379,7 +422,7 @@ app.MapGet("/api/orders/{id}", async (int id) =>
 
 app.MapPost("/api/orders", async (Order order) =>
 {
-    Console.WriteLine($"Received POST request for new order");
+    Console.WriteLine("Received POST request for new order");
     Console.WriteLine($"Order data: ClientId={order.ClientId}, Status={order.Status}");
     Console.WriteLine($"Items count: {order.Items?.Count ?? 0}");
     
@@ -483,7 +526,6 @@ app.MapPost("/api/orders", async (Order order) =>
     {
         await transaction.RollbackAsync();
         Console.WriteLine($"Error in POST /api/orders endpoint: {ex.Message}");
-        Console.WriteLine($"Stack trace: {ex.StackTrace}");
         return Results.BadRequest(new { error = ex.Message });
     }
 });
@@ -654,13 +696,14 @@ app.MapPut("/api/orders/{id}", async (int id, Order order) =>
     {
         await transaction.RollbackAsync();
         Console.WriteLine($"Error in PUT /api/orders/{id} endpoint: {ex.Message}");
-        Console.WriteLine($"Stack trace: {ex.StackTrace}");
         return Results.BadRequest(new { error = ex.Message });
     }
 });
 
 app.MapDelete("/api/orders/{id}", async (int id) =>
 {
+    Console.WriteLine($"Received DELETE request for order {id}");
+    
     using var db = new SqlConnection(connectionString);
     await db.OpenAsync();
     using var transaction = db.BeginTransaction();
@@ -673,6 +716,8 @@ app.MapDelete("/api/orders/{id}", async (int id) =>
             transaction
         );
         
+        Console.WriteLine($"Found {items.Count()} items to return to stock");
+        
         // Возврат товаров на склад
         foreach (var item in items)
         {
@@ -681,6 +726,8 @@ app.MapDelete("/api/orders/{id}", async (int id) =>
                 SET quantity_in_stock = quantity_in_stock + @Quantity
                 WHERE product_id = @ProductId";
                 
+            Console.WriteLine($"Returning item to stock: ProductId={item.ProductId}, Quantity={item.Quantity}");
+            
             await db.ExecuteAsync(returnStockSql, new {
                 item.Quantity,
                 item.ProductId
@@ -694,6 +741,8 @@ app.MapDelete("/api/orders/{id}", async (int id) =>
             transaction
         );
         
+        Console.WriteLine("Deleted order items");
+        
         // Удаление заказа
         await db.ExecuteAsync(
             "DELETE FROM Orders WHERE order_id = @Id",
@@ -702,6 +751,7 @@ app.MapDelete("/api/orders/{id}", async (int id) =>
         );
         
         transaction.Commit();
+        Console.WriteLine($"Successfully deleted order {id}");
         return Results.Ok();
     }
     catch (Exception ex)
@@ -774,6 +824,15 @@ app.Use(async (context, next) =>
 
 // Redirect root to index.html
 app.MapGet("/", () => Results.Redirect("/index.html"));
+
+app.UseRouting();
+app.UseRequestLocalization(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture("ru-RU");
+    options.SupportedCultures = new List<CultureInfo> { new CultureInfo("ru-RU"), new CultureInfo("en-US") };
+    options.SupportedUICultures = new List<CultureInfo> { new CultureInfo("ru-RU"), new CultureInfo("en-US") };
+});
+app.UseAuthorization();
 
 Console.WriteLine("Starting web application...");
 app.Run();

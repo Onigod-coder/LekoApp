@@ -38,4 +38,7 @@ logs/
 *.env
 appsettings.*.json
 !appsettings.json
-!appsettings.Example.json 
+!appsettings.Example.json
+
+ssl/
+Дневник_ПП_ПМ04 53-02в (1).docx 

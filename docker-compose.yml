@@ -5,24 +5,32 @@ services:
     build: .
     ports:
       - "3000:80"
+      - "3443:443"
     depends_on:
       db:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=LekoStyle;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=LekoStyle;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=True;
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./ssl:/app/ssl
 
   db:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=YourStrong@Passw0rd
     ports:
-      - "1434:1433"
+      - "1433:1433"
     volumes:
-      - sqldata:/var/opt/mssql
-      - ./init-db-first-time.sql:/docker-entrypoint-initdb.d/init.sql
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - sqldata:/var/opt/mssql
     command: /bin/bash -c "/opt/mssql/bin/sqlservr & /docker-entrypoint-initdb.d/init-db.sh"
     healthcheck:
       test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong@Passw0rd" -C -Q "SELECT 1" -b -o /dev/null
